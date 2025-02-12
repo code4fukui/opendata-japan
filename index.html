@@ -67,6 +67,7 @@ const show = function(name) {
         const op = opendatajp.find(i => i.地方公共団体コード == data.cid);
         console.log(data, op);
         c.style.backgroundColor = op.状態 == "提出済" ? "white" : "red";
+        c.innerHTML += `<br>${op.状態}`;
 //        window.open(data.url, "_blank")
       } else { // pref
         const cities = opendatajp.filter(i => i.都道府県名 == name);
