@@ -11,8 +11,10 @@ import { ArrayUtil } from "https://js.sabae.cc/ArrayUtil.js";
 
 const opendatajp = await CSV.fetchJSON("20250210_resources_data_questionnaire_outline_04.csv");
 // check
-//console.log("状態", ArrayUtil.toUnique(opendatajp.map(i => i.状態)));
-// -> '提出済', '未確認', '未提出'
+const check = (s) => console.log(s, ArrayUtil.toUnique(opendatajp.map(i => i[s])));
+//check("状態"); // -> '提出済', '未確認', '未提出'
+//check("Q3【回答対象：全団体】貴団体はオープンデータに取り組んでいますか？"); // -> '取組んでいる', '', '取組んでいない'
+const q3_hasopendata = "Q3【回答対象：全団体】貴団体はオープンデータに取り組んでいますか？";
 
 const url_citiesjp = "https://code4fukui.github.io/localgovjp/localgovjp-utf8.csv"
 const cities = await CSV.fetchJSON(url_citiesjp)
@@ -69,17 +71,23 @@ const show = function(name) {
       if (data) { // city
         // 地方公共団体コード,地方公共団体コード6桁,地方公共団体名,都道府県名,都道府県名または市町村名,状態
         const op = opendatajp.find(i => i.地方公共団体コード == data.cid);
-        console.log(data, op);
-        c.style.backgroundColor = op.状態 == "提出済" ? "white" : "red";
-        c.innerHTML += `<br>${op.状態}`;
+        //console.log(data, op);
+        c.style.backgroundColor = op.状態 == "提出済" ? (op[q3_hasopendata] == "取組んでいる" ? "white" : "pink") : "red";
+        c.innerHTML += `<br>${op[q3_hasopendata]}<br>${op.状態}`;
 //        window.open(data.url, "_blank")
       } else { // pref
         const cities = opendatajp.filter(i => i.都道府県名 == name);
         const res = cities.filter(i => i.状態 == "提出済");
         const ratio = res.length / cities.length * 100;
-        c.innerHTML += `<br>${res.length}/${cities.length} ${ratio.toFixed(1)}%`;
+        const hasod = cities.filter(i => i[q3_hasopendata] == "取組んでいる");
+        const ratio2 = hasod.length / cities.length * 100;
+        
+        c.innerHTML += `<br><div class=ratio>
+          提出率${ratio.toFixed(1)}% ${res.length}/${cities.length}<br>
+          取組率${ratio2.toFixed(1)}% ${hasod.length}/${cities.length} 
+        </div>`;
         c.style.backgroundColor = `hsl(0, 100%, ${ratio}%)`;
-        console.log(name);
+        //console.log(name);
       }
     }
   }
@@ -122,7 +130,6 @@ h1 {
 }
 /* tabularmaps */
 #tmapc span {
-  display: flex;
   font-size: min(2.0vmax, 16px);
   align-items: center;
   justify-content: center;
@@ -157,6 +164,9 @@ th, td {
   border: 1px solid black;
   padding: .2em;
   text-align: left;
+}
+.ratio {
+  font-size: 75%;
 }
 </style>
 </head>
