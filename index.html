@@ -1,0 +1,172 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><link rel="icon" href="data:">
+<title>オープンデータ取組状況ダッシュボード</title>
+<link rel="apple-touch-icon" href="tabularmaps_japan.png"/>
+<meta property="og:image" content="tabularmaps_japan.png">
+<meta name="format-detection" content="telephone=no"/>
+<script type="module">
+import { CSV } from "https://js.sabae.cc/CSV.js";
+import { makeGrids } from "./makeGrids.js";
+import { cr } from "https://js.sabae.cc/cr.js";
+
+const opendatajp = await CSV.fetchJSON("20250210_resources_data_questionnaire_outline_04.csv");
+
+const url_citiesjp = "https://code4fukui.github.io/localgovjp/localgovjp-utf8.csv"
+const cities = await CSV.fetchJSON(url_citiesjp)
+const getCityData = function(pref, city) {
+  for (const d of cities) {
+    if (d.pref == pref && d.city == city) {
+      return d
+    }
+  }
+  return null
+}
+
+const area = await CSV.fetchJSON("https://tabularmaps.github.io/areamap/tabularmaps_japan.csv")
+//checkTabularMaps(area, cities)
+
+const show = function(name) {
+  let tmapdata = area[0]
+  for (const d of area) {
+    if (d.name == name) {
+      tmapdata = d
+      break
+    }
+  }
+  back.style.display = tmapdata == area[0] ? "none" : "inline-block"
+  
+  const tmap = makeGrids(tmapdata.tabularmap)
+  tmapc.innerHTML = ""
+  tmapc.appendChild(tmap)
+  tmtitle.textContent = tmapdata.name_ja
+
+  for (const c of tmap.children) {
+    const name = c.textContent;
+    c.bkname = name;
+    if (name != "-") {
+      c.onclick = function() {
+        const name = c.bkname;
+        const data = getCityData(tmapdata.name_ja, name)
+        if (data) {
+          const op = opendatajp.find(i => i.地方公共団体コード == data.cid);
+          showContent(op);
+          //window.open(data.url, "_blank")
+          return
+        }
+        // pref
+        for (const d of area) {
+          if (d.name_ja == name) {
+            //show(d.name)
+            document.location.hash = "#" + d.name
+            break
+          }
+        }
+      }
+      const data = getCityData(tmapdata.name_ja, name)
+      if (data) { // city
+        // 地方公共団体コード,地方公共団体コード6桁,地方公共団体名,都道府県名,都道府県名または市町村名,状態
+        const op = opendatajp.find(i => i.地方公共団体コード == data.cid);
+        console.log(data, op);
+        c.style.backgroundColor = op.状態 == "提出済" ? "white" : "red";
+//        window.open(data.url, "_blank")
+      } else { // pref
+        const cities = opendatajp.filter(i => i.都道府県名 == name);
+        const res = cities.filter(i => i.状態 == "提出済");
+        const ratio = res.length / cities.length * 100;
+        c.innerHTML += `<br>${res.length}/${cities.length} ${ratio.toFixed(1)}%`;
+        c.style.backgroundColor = `hsl(0, 100%, ${ratio}%)`;
+        console.log(name);
+      }
+    }
+  }
+}
+
+window.onhashchange = () => {
+  const hash = document.location.hash;
+  if (hash.length > 1) {
+    show(hash.substring(1));
+  } else {
+    show("Japan");
+  }
+};
+window.onhashchange()
+
+back.onclick = () => {
+  document.location.hash = ""
+};
+
+const showContent = (json) => {
+  const tbl = cr("table");
+  for (const name in json) {
+    const tr = cr("tr", tbl);
+    cr("th", tr).textContent = name;
+    cr("td", tr).textContent = json[name];
+  }
+  divcontent.innerHTML = "";
+  divcontent.appendChild(tbl);
+};
+
+</script>
+<style>
+body {
+  font-family: sans-serif;
+  text-align: center;
+}
+h1 {
+  font-size: 3vw;
+  margin-top: 2vw;
+}
+/* tabularmaps */
+#tmapc span {
+  display: flex;
+  font-size: min(2.0vmax, 16px);
+  align-items: center;
+  justify-content: center;
+  border-radius: .5vmax;
+  border: .1vmax solid #333;
+  padding: .2vmax .2vmax;
+  margin: .2vmax;
+}
+/* other */
+#tmtitle {
+  color: black;
+}
+#back {
+  display: none;
+  margin: 1vw;
+  padding: .5vw;
+}
+/* credit */
+.credit {
+  margin: 20px;
+  text-align: center;
+  font-size: 80%;
+}
+.credit a {
+  color: #666 !important;
+}
+/* content */
+table {
+  border-collapse: collapse;
+}
+th, td {
+  border: 1px solid black;
+  padding: .2em;
+}
+</style>
+</head>
+<body>
+
+<h1>オープンデータ取組状況ダッシュボード（<span id=tmtitle>日本</span>）</h1>
+
+<div id="tmapc"></div>
+<button id="back">もどる</button>
+<div id="divcontent"></div>
+
+<div class="credit">
+APP: <a href=https://github.com/code4fukui/opendata-japan/>src on GitHub</a> forked <a href=https://tabularmaps.github.io/areamap/tabularmaps_japan.html>日本カラム地図</a><br>
+LAYOUT: <a href=tabularmaps_japan.csv>TabularMaps Japan - 日本カラム地図 CSV</a> CC0 <a href=https://github.com/tabularmaps/hq>カラム地図 / TabularMaps on Github</a><br>
+DATA: <a href=https://www.digital.go.jp/resources/data_questionnaire>地方公共団体へのオープンデータの取組に関するアンケート結果・回答一覧｜デジタル庁 - 令和6年度</a> / <a href=https://github.com/code4fukui/localgovjp>code4fukui/localgovjp: list of local government in Japan (日本の地方自治体一覧オープンデータ)</a><br>
+</div>
+
+</body>
+</html>
