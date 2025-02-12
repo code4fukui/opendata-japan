@@ -7,8 +7,12 @@
 import { CSV } from "https://js.sabae.cc/CSV.js";
 import { makeGrids } from "./makeGrids.js";
 import { cr } from "https://js.sabae.cc/cr.js";
+import { ArrayUtil } from "https://js.sabae.cc/ArrayUtil.js";
 
 const opendatajp = await CSV.fetchJSON("20250210_resources_data_questionnaire_outline_04.csv");
+// check
+//console.log("状態", ArrayUtil.toUnique(opendatajp.map(i => i.状態)));
+// -> '提出済', '未確認', '未提出'
 
 const url_citiesjp = "https://code4fukui.github.io/localgovjp/localgovjp-utf8.csv"
 const cities = await CSV.fetchJSON(url_citiesjp)
@@ -167,7 +171,7 @@ th, td {
 <div class="credit">
 APP: <a href=https://github.com/code4fukui/opendata-japan/>src on GitHub</a> forked <a href=https://tabularmaps.github.io/areamap/tabularmaps_japan.html>日本カラム地図</a><br>
 LAYOUT: <a href=tabularmaps_japan.csv>TabularMaps Japan - 日本カラム地図 CSV</a> CC0 <a href=https://github.com/tabularmaps/hq>カラム地図 / TabularMaps on Github</a><br>
-DATA: <a href=https://www.digital.go.jp/resources/data_questionnaire>地方公共団体へのオープンデータの取組に関するアンケート結果・回答一覧｜デジタル庁 - 令和6年度</a> / <a href=https://github.com/code4fukui/localgovjp>code4fukui/localgovjp: list of local government in Japan (日本の地方自治体一覧オープンデータ)</a><br>
+DATA: <a href=https://www.digital.go.jp/resources/data_questionnaire>地方公共団体へのオープンデータの取組に関するアンケート結果・回答一覧｜デジタル庁 - 令和6年度</a> / <a href=https://github.com/code4fukui/localgovjp>code4fukui/localgovjp: list of local government in Japan (日本の地方自治体一覧オープンデータ)</a> （※未提出: システムにアクセスしたがアンケートは未提出、未確認: システムへのアクセスなし）<br>
 </div>
 
 </body>
